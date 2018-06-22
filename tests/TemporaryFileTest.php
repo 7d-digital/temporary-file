@@ -113,4 +113,17 @@ class TemporaryFileTest extends BaseTestCase
         $this->assertTrue(file_exists($temporaryFilePath));
         $this->assertEquals($expectedFileContents, $actualFileContents);
     }
+
+    public function testPersistTypechange()
+    {
+        $temporaryFile = new \SevenD\TemporaryFile($this->getTestFilePath());
+
+        $temporaryFile->persistUntil(\SevenD\TemporaryFile::PERSIST_UNTIL_SHUTDOWN);
+
+        $this->assertTrue($temporaryFile->persistsUntil(\SevenD\TemporaryFile::PERSIST_UNTIL_SHUTDOWN));
+
+        $temporaryFile->persistUntil(\SevenD\TemporaryFile::PERSIST_UNTIL_DESTRUCT);
+
+        $this->assertTrue($temporaryFile->persistsUntil(\SevenD\TemporaryFile::PERSIST_UNTIL_DESTRUCT));
+    }
 }
