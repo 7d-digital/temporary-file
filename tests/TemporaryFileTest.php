@@ -48,6 +48,7 @@ class TemporaryFileTest extends BaseTestCase
 
         $closure();
 
+        $this->assertTrue(strlen($temporaryFilePath) > 0);
         $this->assertTrue(!file_exists($temporaryFilePath));
     }
 
