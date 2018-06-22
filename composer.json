@@ -1,0 +1,22 @@
+{
+    "name": "7d-digital/temporary-file",
+    "description": "Class to create temporary file objects from other files, streams and string contents",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Daniel Withams",
+            "email": "dan@7d-digital.co.uk"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SevenD\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "^7.3@dev"
+    }
+}

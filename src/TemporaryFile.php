@@ -1,100 +1,209 @@
 <?php namespace SevenD;
 
 use SplFileObject;
+use InvalidArgumentException;
 
 class TemporaryFile extends SplFileObject
 {
+    const PERSIST_UNTIL_DESTRUCT = 1;
+    const PERSIST_UNTIL_SHUTDOWN = 2;
+
+    protected $persistTypes = [
+        self::PERSIST_UNTIL_DESTRUCT,
+        self::PERSIST_UNTIL_SHUTDOWN
+    ];
+
     protected $temporaryFilePath;
     protected $temporaryDirectory;
-    protected $persist = false;
+    protected $persist = self::PERSIST_UNTIL_DESTRUCT;
 
-    public function __construct($file_name, $open_mode = "r", $use_include_path = false, $context = null)
+    /**
+     * Create a Temporary file object from path
+     *
+     * @param string $path
+     * @return void
+     */
+    public function __construct(string $path)
     {
         $temporaryDirectory = sprintf('%s/', rtrim(sys_get_temp_dir(), '/'));
-        $temporaryFilePath = sprintf('%s%s', $temporaryDirectory, basename($file_name));
+        $temporaryFilePath = sprintf('%s%s', $temporaryDirectory, basename($path));
 
-        copy($file_name, $temporaryFilePath);
+        copy($path, $temporaryFilePath);
 
-        parent::__construct($temporaryFilePath, $open_mode, $use_include_path, $context);
+        parent::__construct($temporaryFilePath);
+
         $this->setTemporaryFilePath($temporaryFilePath);
         $this->setTemporaryDirectory($temporaryDirectory);
     }
 
+    /**
+     * Remove (or set up removal of) the temporary file
+     *
+     * @param string $path
+     * @return void
+     */
     public function __destruct()
     {
-        if (file_exists($this->getTemporaryFilePath()) && !$this->shouldPersist()) {
-            unlink($this->getTemporaryFilePath());
-        } else {
-            $path = $this->getTemporaryFilePath();
-            register_shutdown_function(function() use($path) {
-                if (file_exists($path)) {
-                    unlink($path);
-                }
-            });
+        $path = $this->getTemporaryFilePath();
+
+        // Check files exists, we don't need to do anything if it doesn't.
+        if (file_exists($this->getTemporaryFilePath())) {
+            if ($this->persistsUntil(self::PERSIST_UNTIL_DESTRUCT)) {
+                // Remove file if persist type is until the objects destruction. This could be via;
+                // 1) unset()
+                // 2) Reassignment of variable orphaning the object
+                // 3) Variable unset by Garbage Collector (variable becomes unreachable)
+                unlink($path);
+            } elseif ($this->persistsUntil(self::PERSIST_UNTIL_SHUTDOWN)) {
+                // Register shutdown event to remove file if persist type is until the script shutdown
+                register_shutdown_function(function() use($path) {
+                    // Must check file existance again as time this is psuedo-asynchronous
+                    if (file_exists($path)) {
+                        unlink($path);
+                    }
+                });
+            }
         }
     }
 
-    public static function createFromPath($path, $open_mode = "r", $use_include_path = false, $context = null)
+    /**
+     * Static constructor for creating temporary file object from a path
+     *
+     * @param string $path
+     * @return \SevenD\TemporaryFile
+     */
+    public static function createFromPath($path)
     {
-        return new TemporaryFile($path, $open_mode, $use_include_path, $context);
+        return new TemporaryFile($path);
     }
 
-    public static function createFromContents($contents, $extension, $filename = null, $open_mode = "r", $use_include_path = false, $context = null)
+    /**
+     * Static constructor for creating temporary file object from a raw contents
+     *
+     * @param string $contents
+     * @param string $extension
+     * @param string $filename
+     * @return \SevenD\TemporaryFile
+     */
+    public static function createFromContents(string $contents, string $extension, string $filename = null)
     {
         $path = sprintf('%s%s.%s', sprintf('%s/', rtrim(sys_get_temp_dir(), '/')), $filename ?: md5(time() . $contents), $extension);
         file_put_contents($path, $contents);
 
-        $temporaryFile = new TemporaryFile($path, $open_mode, $use_include_path, $context);
+        $temporaryFile = new TemporaryFile($path);
 
         return $temporaryFile;
     }
 
-    public static function createFromResource($resource, $extension, $filename = null, $open_mode = "r", $use_include_path = false, $context = null)
+    /**
+     * Static constructor for creating temporary file object from a file resource
+     *
+     * @param resource $resource
+     * @param string $extension
+     * @param string $filename
+     * @return \SevenD\TemporaryFile
+     */
+    public static function createFromResource($resource, string $extension, string $filename = null)
     {
-        return self::createFromContents(stream_get_contents($resource), $extension, $filename, $open_mode, $use_include_path, $context);
+        if (!is_resource($resource)) {
+            throw new InvalidArgumentException('Argument 1 of createFromResource should be resource.');
+        }
+        return self::createFromContents(stream_get_contents($resource), $extension, $filename);
     }
 
-    public function createFromSplFileObject(SplFileObject $splFileObject, $open_mode = "r", $use_include_path = false, $context = null)
+    /**
+     * Static constructor for creating temporary file object from a SplFileObject
+     *
+     * @param SplFileObject $splFileObject
+     * @return \SevenD\TemporaryFile
+     */
+    public static function createFromSplFileObject(SplFileObject $splFileObject)
     {
-        return self::createFromPath($splFileObject->getRealPath(), $open_mode, $use_include_path, $context);
+        return self::createFromPath($splFileObject->getRealPath());
     }
 
+    /**
+     * Get the temporary files path
+     *
+     * @return string
+     */
     public function getTemporaryFilePath()
     {
         return $this->temporaryFilePath;
     }
 
-    public function setTemporaryFilePath($temporaryFilePath)
+    /**
+     * Set the path to the temporary file
+     *
+     * @param string $temporaryFilePath
+     * @return \SevenD\TemporaryFile
+     */
+    protected function setTemporaryFilePath($temporaryFilePath)
     {
         $this->temporaryFilePath = $temporaryFilePath;
         return $this;
     }
 
+    /**
+     * Get the path to the temporary file's directory
+     *
+     * @return string
+     */
     public function getTemporaryDirectory()
     {
         return $this->temporaryDirectory;
     }
 
-    public function setTemporaryDirectory($temporaryDirectory)
+    /**
+     * Set the path to the temporary file's directory
+     *
+     * @param string $temporaryDirectory
+     * @return \SevenD\TemporaryFile
+     */
+    protected function setTemporaryDirectory($temporaryDirectory)
     {
         $this->temporaryDirectory = $temporaryDirectory;
         return $this;
     }
 
-    public function shouldPersist(): bool
+    /**
+     * Test the current persist type
+     *
+     * @param integer $persistType
+     * @return boolean
+     */
+    public function persistsUntil(int $persistType): bool
     {
-        return $this->persist;
+        if (!$this->isValidPersistType($persistType)) {
+            throw new InvalidArgumentException('Unable to test persist type of TemporaryFile. Supported persist type supplied.');
+        }
+        return $this->persist == $persistType;
     }
 
-    public function setPersist(bool $persist): TemporaryFile
+    /**
+     * Set the persist type
+     *
+     * @param integer $persistType
+     * @return \SevenD\TemporaryFile
+     */
+    public function persistUntil(int $persistType): TemporaryFile
     {
-        $this->persist = $persist;
+        if (!$this->isValidPersistType($persistType)) {
+            throw new InvalidArgumentException('Unable to set persist type of TemporaryFile. Supported persist type supplied.');
+        }
+
+        $this->persist = $persistType;
         return $this;
     }
 
-    public function persist($persist = true)
+    /**
+     * Check the value is a valid persist type
+     *
+     * @param integer $persistType
+     * @return boolean
+     */
+    protected function isValidPersistType($persistType): bool
     {
-        $this->setPersist($persist);
-        return $this;
+        return in_array($persistType, $this->persistTypes);        
     }
 }
