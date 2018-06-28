@@ -23,7 +23,7 @@ class TemporaryFile extends SplFileObject
      * @param string $path
      * @return void
      */
-    public function __construct(string $path)
+    public function __construct($path)
     {
         $temporaryDirectory = sprintf('%s/', rtrim(sys_get_temp_dir(), '/'));
         $temporaryFilePath = sprintf('%s%s', $temporaryDirectory, basename($path));
@@ -85,7 +85,7 @@ class TemporaryFile extends SplFileObject
      * @param string $filename
      * @return \SevenD\TemporaryFile
      */
-    public static function createFromContents(string $contents, string $extension, string $filename = null)
+    public static function createFromContents($contents, $extension, $filename = null)
     {
         $path = sprintf('%s%s.%s', sprintf('%s/', rtrim(sys_get_temp_dir(), '/')), $filename ?: md5(time() . $contents), $extension);
         file_put_contents($path, $contents);
@@ -103,7 +103,7 @@ class TemporaryFile extends SplFileObject
      * @param string $filename
      * @return \SevenD\TemporaryFile
      */
-    public static function createFromResource($resource, string $extension, string $filename = null)
+    public static function createFromResource($resource, $extension, $filename = null)
     {
         if (!is_resource($resource)) {
             throw new InvalidArgumentException('Argument 1 of createFromResource should be resource.');
@@ -172,7 +172,7 @@ class TemporaryFile extends SplFileObject
      * @param integer $persistType
      * @return boolean
      */
-    public function persistsUntil(int $persistType): bool
+    public function persistsUntil(int $persistType)
     {
         if (!$this->isValidPersistType($persistType)) {
             throw new InvalidArgumentException('Unable to test persist type of TemporaryFile. Supported persist type supplied.');
@@ -186,7 +186,7 @@ class TemporaryFile extends SplFileObject
      * @param integer $persistType
      * @return \SevenD\TemporaryFile
      */
-    public function persistUntil(int $persistType): TemporaryFile
+    public function persistUntil(int $persistType)
     {
         if (!$this->isValidPersistType($persistType)) {
             throw new InvalidArgumentException('Unable to set persist type of TemporaryFile. Supported persist type supplied.');
@@ -202,7 +202,7 @@ class TemporaryFile extends SplFileObject
      * @param integer $persistType
      * @return boolean
      */
-    protected function isValidPersistType($persistType): bool
+    protected function isValidPersistType($persistType)
     {
         return in_array($persistType, $this->persistTypes);        
     }
