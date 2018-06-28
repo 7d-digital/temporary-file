@@ -172,7 +172,7 @@ class TemporaryFile extends SplFileObject
      * @param integer $persistType
      * @return boolean
      */
-    public function persistsUntil(int $persistType)
+    public function persistsUntil($persistType)
     {
         if (!$this->isValidPersistType($persistType)) {
             throw new InvalidArgumentException('Unable to test persist type of TemporaryFile. Supported persist type supplied.');
@@ -186,7 +186,7 @@ class TemporaryFile extends SplFileObject
      * @param integer $persistType
      * @return \SevenD\TemporaryFile
      */
-    public function persistUntil(int $persistType)
+    public function persistUntil($persistType)
     {
         if (!$this->isValidPersistType($persistType)) {
             throw new InvalidArgumentException('Unable to set persist type of TemporaryFile. Supported persist type supplied.');
