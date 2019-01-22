@@ -23,14 +23,14 @@ class TemporaryFile extends SplFileObject
      * @param string $path
      * @return void
      */
-    public function __construct(string $path)
+    public function __construct(string $path, $openMode = 'r', $useIncludePath = false, $context = null)
     {
         $temporaryDirectory = sprintf('%s/', rtrim(sys_get_temp_dir(), '/'));
         $temporaryFilePath = sprintf('%s%s', $temporaryDirectory, basename($path));
 
         copy($path, $temporaryFilePath);
 
-        parent::__construct($temporaryFilePath);
+        parent::__construct($temporaryFilePath, $openMode, $useIncludePath, $context);
 
         $this->setTemporaryFilePath($temporaryFilePath);
         $this->setTemporaryDirectory($temporaryDirectory);
@@ -72,9 +72,9 @@ class TemporaryFile extends SplFileObject
      * @param string $path
      * @return \SevenD\TemporaryFile
      */
-    public static function createFromPath($path)
+    public static function createFromPath($path, $openMode = 'r', $useIncludePath = false, $context = null)
     {
-        return new TemporaryFile($path);
+        return new TemporaryFile($path, $openMode, $useIncludePath, $context);
     }
 
     /**
@@ -85,12 +85,12 @@ class TemporaryFile extends SplFileObject
      * @param string $filename
      * @return \SevenD\TemporaryFile
      */
-    public static function createFromContents(string $contents, string $extension, string $filename = null)
+    public static function createFromContents(string $contents, string $extension, string $filename = null, $openMode = 'r', $useIncludePath = false, $context = null)
     {
         $path = sprintf('%s%s.%s', sprintf('%s/', rtrim(sys_get_temp_dir(), '/')), $filename ?: md5(time() . $contents), $extension);
         file_put_contents($path, $contents);
 
-        $temporaryFile = new TemporaryFile($path);
+        $temporaryFile = new TemporaryFile($path, $openMode, $useIncludePath, $context);
 
         return $temporaryFile;
     }
@@ -103,12 +103,12 @@ class TemporaryFile extends SplFileObject
      * @param string $filename
      * @return \SevenD\TemporaryFile
      */
-    public static function createFromResource($resource, string $extension, string $filename = null)
+    public static function createFromResource($resource, string $extension, string $filename = null, $openMode = 'r', $useIncludePath = false, $context = null)
     {
         if (!is_resource($resource)) {
             throw new InvalidArgumentException('Argument 1 of createFromResource should be resource.');
         }
-        return self::createFromContents(stream_get_contents($resource), $extension, $filename);
+        return self::createFromContents(stream_get_contents($resource), $extension, $filename, $openMode, $useIncludePath, $context);
     }
 
     /**
@@ -117,9 +117,9 @@ class TemporaryFile extends SplFileObject
      * @param SplFileObject $splFileObject
      * @return \SevenD\TemporaryFile
      */
-    public static function createFromSplFileObject(SplFileObject $splFileObject)
+    public static function createFromSplFileObject(SplFileObject $splFileObject, $openMode = 'r', $useIncludePath = false, $context = null)
     {
-        return self::createFromPath($splFileObject->getRealPath());
+        return self::createFromPath($splFileObject->getRealPath(), $openMode, $useIncludePath, $context);
     }
 
     /**
