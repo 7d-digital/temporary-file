@@ -87,7 +87,7 @@ class TemporaryFile extends SplFileObject
      */
     public static function createFromContents(string $contents, string $extension, string $filename = null, $openMode = 'r', $useIncludePath = false, $context = null)
     {
-        $path = sprintf('%s%s.%s', sprintf('%s/', rtrim(sys_get_temp_dir(), '/')), $filename ?: md5(random_bytes(8) . miscrotime() . $contents), $extension);
+        $path = sprintf('%s%s.%s', sprintf('%s/', rtrim(sys_get_temp_dir(), '/')), $filename ?: md5(random_bytes(8) . microtime() . $contents), $extension);
        
         file_put_contents($path, $contents);
 
