@@ -1,9 +1,9 @@
 linters:
   phpcs:
     standard: PSR2
-    fixer: true
+    fixer: false
 files:
   ignore:
     - 'vendor/*'
 fixers:
-  enable: true
+  enable: false
