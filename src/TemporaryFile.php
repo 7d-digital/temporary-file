@@ -110,7 +110,7 @@ class TemporaryFile extends SplFileObject
             throw new InvalidArgumentException('Argument 1 of createFromResource should be resource.');
         }
 
-        $path = sprintf('%s%s.%s', sprintf('%s/', rtrim(sys_get_temp_dir(), '/')), $filename ?: md5(random_bytes(8) . microtime() . $contents), $extension);
+        $path = sprintf('%s%s.%s', sprintf('%s/', rtrim(sys_get_temp_dir(), '/')), $filename ?: md5(random_bytes(8) . microtime()), $extension);
 
         stream_copy_to_stream($resource, fopen($path, 'w+'));
 
