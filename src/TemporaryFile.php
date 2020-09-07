@@ -109,7 +109,14 @@ class TemporaryFile extends SplFileObject
         if (!is_resource($resource)) {
             throw new InvalidArgumentException('Argument 1 of createFromResource should be resource.');
         }
-        return self::createFromContents(stream_get_contents($resource), $extension, $filename, $openMode, $useIncludePath, $context);
+
+        $path = sprintf('%s%s.%s', sprintf('%s/', rtrim(sys_get_temp_dir(), '/')), $filename ?: md5(random_bytes(8) . microtime() . $contents), $extension);
+
+        stream_copy_to_stream($resource, fopen($path, 'w+'));
+
+        $temporaryFile = new TemporaryFile($path, $openMode, $useIncludePath, $context);
+
+        return $temporaryFile;
     }
 
     /**
