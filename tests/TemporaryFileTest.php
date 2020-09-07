@@ -82,6 +82,21 @@ class TemporaryFileTest extends BaseTestCase
         $this->assertEquals($fileName, $temporaryFile->getBasename('.' . $extension));
     }
 
+    public function testTemporaryFileCreationFromStaticConstructorContentsWithoutFileName()
+    {
+        $expectedFileContents = 'This is unique content';
+        $extension = 'txt';
+
+        $temporaryFile = \SevenD\TemporaryFile::createFromContents($expectedFileContents, $extension);
+        $temporaryFilePath = $temporaryFile->getRealPath();
+
+        $actualFileContents = file_get_contents($temporaryFilePath);
+
+        $this->assertTrue(file_exists($temporaryFilePath));
+        $this->assertEquals($expectedFileContents, $actualFileContents);
+        $this->assertEquals($extension, $temporaryFile->getExtension());
+    }
+
     public function testTemporaryFileCreationFromStaticConstructorResource()
     {
         $expectedFileContents = file_get_contents($this->getTestFilePath());
@@ -98,6 +113,22 @@ class TemporaryFileTest extends BaseTestCase
         $this->assertEquals($expectedFileContents, $actualFileContents);
         $this->assertEquals($extension, $temporaryFile->getExtension());
         $this->assertEquals($fileName, $temporaryFile->getBasename('.' . $extension));
+    }
+
+    public function testTemporaryFileCreationFromStaticConstructorResourceWithoutFilename()
+    {
+        $expectedFileContents = file_get_contents($this->getTestFilePath());
+        $extension = 'txt';
+
+        $handle = fopen($this->getTestFilePath(), 'r+');
+        $temporaryFile = \SevenD\TemporaryFile::createFromResource($handle, $extension);
+        $temporaryFilePath = $temporaryFile->getRealPath();
+
+        $actualFileContents = file_get_contents($temporaryFilePath);
+
+        $this->assertTrue(file_exists($temporaryFilePath));
+        $this->assertEquals($expectedFileContents, $actualFileContents);
+        $this->assertEquals($extension, $temporaryFile->getExtension());
     }
 
     public function testTemporaryFileCreationFromStaticConstructorSplFileObject()
